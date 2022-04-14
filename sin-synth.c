@@ -1,12 +1,12 @@
-#include <stdio.h>
 #include <errno.h>
 #include <math.h>
 #include <signal.h>
+#include <stdio.h>
 
 #include "SDL.h"
 
-#include <spa/param/audio/format-utils.h>
 #include <pipewire/pipewire.h>
+#include <spa/param/audio/format-utils.h>
 
 #define M_PI_M2 (M_PI + M_PI)
 #define DEFAULT_RATE 44100
@@ -33,6 +33,7 @@ typedef struct state {
     Boolean quit;
     Boolean play;
     float note;
+    SDL_Keycode key;
 } state_t;
 
 /* TODO lock this */
@@ -64,11 +65,9 @@ static void fill_f32(struct data* d, void* dest, int n_frames, float note)
     }
 }
 
-static void set_note(SDL_Keysym * sym)
+static void set_note(SDL_Keysym* sym)
 {
-    printf("key press %s\n", SDL_GetKeyName(sym->sym));
-    switch (sym->sym)
-    {
+    switch (sym->sym) {
     case 'a':
         printf("a\n");
         state.note = C4;
@@ -115,13 +114,14 @@ static void set_note(SDL_Keysym * sym)
     default:
         break;
     }
+    printf("key press = %s play = %f\n", SDL_GetKeyName(sym->sym), state.note);
 }
 
-static void on_process(void *userdata)
+static void on_process(void* userdata)
 {
-    struct data *data = userdata;
-    struct pw_buffer *b;
-    struct spa_buffer *buf;
+    struct data* data = userdata;
+    struct pw_buffer* b;
+    struct spa_buffer* buf;
     int n_frames, stride;
     uint8_t* p;
 
@@ -144,7 +144,7 @@ static void on_process(void *userdata)
         return;
 
     stride = sizeof(float) * DEFAULT_CHANNELS;
-    n_frames = buf->datas[0].maxsize / (stride * 2);
+    n_frames = buf->datas[0].maxsize / (stride * 32);
 
     fill_f32(data, p, n_frames, state.note);
 
@@ -204,16 +204,18 @@ static int SDLCALL input_thread(void* ptr)
         switch (event.type) {
         case SDL_KEYDOWN:
         case SDL_KEYUP:
-            if (event.key.repeat) {
-                break;
-            }
-            set_note(&event.key.keysym);
             if (event.key.state == SDL_PRESSED) {
-                printf("play\n");
-                state.play = 1;
+                if (state.key != event.key.keysym.sym) {
+                    set_note(&event.key.keysym);
+                    state.key = event.key.keysym.sym;
+                    state.play = 1;
+                    printf("play\n");
+                }
             } else {
-                printf("stop\n");
-                state.play = 0;
+                if (state.key == event.key.keysym.sym) {
+                    state.play = 0;
+                    printf("stop\n");
+                }
             }
             break;
         case SDL_MOUSEBUTTONDOWN:
