@@ -109,6 +109,7 @@ static void set_note(SDL_Keysym* sym)
         state.note = C5;
         break;
     case 'q':
+        state.quit = 1;
         state.note = 0;
         break;
     default:
@@ -221,6 +222,7 @@ static int SDLCALL input_thread(void* ptr)
         case SDL_MOUSEBUTTONDOWN:
         case SDL_QUIT:
             state.quit = 1;
+            state.note = 0;
             break;
         default:
             break;
