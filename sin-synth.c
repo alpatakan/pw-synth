@@ -214,6 +214,7 @@ static int SDLCALL input_thread(void* ptr)
                 }
             } else {
                 if (state.key == event.key.keysym.sym) {
+                    state.key = 0;
                     state.play = 0;
                     printf("stop\n");
                 }
@@ -256,9 +257,6 @@ void sdl_run(void)
         state.quit = 1;
         return;
     }
-
-    // renderer = SDL_CreateRenderer(window, -1, 0);
-    // SDL_RenderPresent(renderer);
 
     SDL_StartTextInput();
     SDL_PumpEvents();
